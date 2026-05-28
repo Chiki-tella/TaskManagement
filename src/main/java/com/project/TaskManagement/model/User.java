@@ -25,6 +25,12 @@ public class User {
 
     private String name;
     private String email;
+    
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private String password;
+    
+    @Builder.Default
+    private String roles = "ROLE_USER";
 
     @OneToMany(mappedBy = "assignee")
     @Builder.Default 

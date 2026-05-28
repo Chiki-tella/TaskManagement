@@ -41,5 +41,6 @@ public class Task {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"tasks", "hibernateLazyInitializer", "handler"})
     private User assignee;
 }

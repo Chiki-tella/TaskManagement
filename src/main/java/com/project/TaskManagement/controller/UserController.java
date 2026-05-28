@@ -12,10 +12,17 @@ import java.util.List;
 public class UserController {
 
     private final UserRepository userRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     // POST /api/users
     @PostMapping
     public User createUser(@RequestBody User user) {
+        if (user.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
+        if (user.getRoles() == null) {
+            user.setRoles("ROLE_USER");
+        }
         return userRepository.save(user);
     }
 

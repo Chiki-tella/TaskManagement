@@ -9,4 +9,5 @@ import java.util.List;
 public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findAll();
     <S extends User> S save(S entity);
+    java.util.Optional<User> findByEmail(String email);
 }

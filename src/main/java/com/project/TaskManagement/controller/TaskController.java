@@ -3,6 +3,7 @@ package com.project.TaskManagement.controller;
 
 
 import com.project.TaskManagement.dto.TaskFilterRequest;
+import com.project.TaskManagement.dto.TaskRequest;
 import com.project.TaskManagement.model.*;
 import com.project.TaskManagement.service.TaskService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,12 @@ import java.util.List;
 public class TaskController {
 
     private final TaskService taskService;
+
+    // POST /api/tasks
+    @PostMapping
+    public Task createTask(@RequestBody TaskRequest req) {
+        return taskService.createTask(req);
+    }
 
     // GET /api/tasks/by-status?status=TODO
     @GetMapping("/by-status")
@@ -42,9 +49,11 @@ public class TaskController {
     public Page<Task> getPaged(
         @RequestParam Status status,
         @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "dueDate") String sortBy,
+        @RequestParam(defaultValue = "ASC") String sortDir
     ) {
-        return taskService.getByStatusPaged(status, page, size);
+        return taskService.getByStatusPaged(status, page, size, sortBy, sortDir);
     }
 
     // GET /api/tasks/by-statuses?statuses=TODO&statuses=IN_PROGRESS

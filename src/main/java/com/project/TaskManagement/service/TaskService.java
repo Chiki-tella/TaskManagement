@@ -57,8 +57,10 @@ public class TaskService {
         return taskRepository.findByStatuses(statuses);
     }
 
-    public Page<Task> getByStatusPaged(Status status, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("dueDate").ascending());
+    public Page<Task> getByStatusPaged(Status status, int page, int size, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
         return taskRepository.findByStatusPaged(status, pageable);
     }
 
