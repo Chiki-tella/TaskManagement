@@ -35,7 +35,11 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .formLogin(withDefaults()) // Enable web form login
-            .httpBasic(withDefaults()); // Keep HTTP Basic Auth for API/Swagger testing
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                })
+            );
 
         http.authenticationProvider(authenticationProvider());
         

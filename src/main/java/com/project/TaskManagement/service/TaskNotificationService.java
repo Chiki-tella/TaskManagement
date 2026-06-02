@@ -6,9 +6,9 @@ import org.springframework.stereotype.Service;
 	@Service
 	public class TaskNotificationService {
 
-	    @Scheduled(fixedRate = 5000)
+	    @Scheduled(fixedRate = 15000)
 	    public void sendNotification() {
-	        System.out.println("Notification sent every 5 seconds");
+	        System.out.println("Notification sent every 15 seconds");
 	    }
 	}
 

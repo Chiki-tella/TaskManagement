@@ -1,0 +1,219 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import { LogOut, Plus, CheckCircle2, Circle, Clock, Trash2 } from 'lucide-react';
+
+export default function Dashboard() {
+  const { user, logout } = useAuth();
+  const [tasks, setTasks] = useState([]);
+  const [statusFilter, setStatusFilter] = useState('TODO');
+  const [loading, setLoading] = useState(false);
+
+  // New task modal state
+  const [showModal, setShowModal] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskDesc, setNewTaskDesc] = useState('');
+  const [newTaskPriority, setNewTaskPriority] = useState('MEDIUM');
+
+  useEffect(() => {
+    fetchTasks();
+  }, [statusFilter]);
+
+  const fetchTasks = async () => {
+    setLoading(true);
+    try {
+      // Using the paged endpoint to get tasks by status
+      const res = await fetch(`/api/tasks/paged?status=${statusFilter}&page=0&size=50`);
+      if (res.ok) {
+        const data = await res.json();
+        setTasks(data.content || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch tasks", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateTask = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newTaskTitle,
+          description: newTaskDesc,
+          priority: newTaskPriority,
+          status: 'TODO'
+        })
+      });
+      if (res.ok) {
+        setShowModal(false);
+        setNewTaskTitle('');
+        setNewTaskDesc('');
+        setNewTaskPriority('MEDIUM');
+        if (statusFilter === 'TODO') {
+          fetchTasks();
+        } else {
+          setStatusFilter('TODO');
+        }
+      }
+    } catch (e) {
+      console.error("Failed to create task", e);
+    }
+  };
+
+  const handleCloseTask = async (id) => {
+    try {
+      const res = await fetch(`/api/tasks/${id}/close`, { method: 'PATCH' });
+      if (res.ok) {
+        fetchTasks();
+      }
+    } catch (e) {
+      console.error("Failed to close task", e);
+    }
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Navigation */}
+      <nav style={{ background: 'var(--surface-color)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--surface-border)', padding: '1rem 0' }}>
+        <div className="container" style={{ padding: '0 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>T</div>
+            <h1 style={{ fontSize: '1.25rem', fontWeight: '600', margin: 0 }}>TaskFlow</h1>
+          </div>
+          <button onClick={logout} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <LogOut size={16} /> Logout
+          </button>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <div className="container" style={{ flex: 1, padding: '2rem' }}>
+        
+        {/* Header Section */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem' }}>
+          <div>
+            <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Your Tasks</h2>
+            <p style={{ color: 'var(--text-secondary)' }}>Manage your daily goals and workflows.</p>
+          </div>
+          <button onClick={() => setShowModal(true)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Plus size={18} /> New Task
+          </button>
+        </div>
+
+        {/* Filters */}
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+          {['TODO', 'IN_PROGRESS', 'DONE'].map(status => (
+            <button
+              key={status}
+              onClick={() => setStatusFilter(status)}
+              className="btn"
+              style={{
+                background: statusFilter === status ? 'var(--surface-color)' : 'transparent',
+                border: '1px solid',
+                borderColor: statusFilter === status ? 'var(--primary-color)' : 'var(--surface-border)',
+                color: statusFilter === status ? 'var(--primary-color)' : 'var(--text-secondary)',
+                borderRadius: '99px',
+                padding: '0.5rem 1.25rem',
+                fontSize: '0.875rem'
+              }}
+            >
+              {status.replace('_', ' ')}
+            </button>
+          ))}
+        </div>
+
+        {/* Task List */}
+        <div className="glass-panel" style={{ overflow: 'hidden' }}>
+          {loading ? (
+            <div style={{ padding: '4rem', display: 'flex', justifyContent: 'center' }}>
+              <div className="spinner"></div>
+            </div>
+          ) : tasks.length === 0 ? (
+            <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+              <CheckCircle2 size={48} style={{ opacity: 0.2, margin: '0 auto 1rem' }} />
+              <p>No tasks found for this status.</p>
+            </div>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--surface-border)', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                  <th style={{ padding: '1.25rem 1.5rem', fontWeight: '500' }}>Task</th>
+                  <th style={{ padding: '1.25rem 1.5rem', fontWeight: '500' }}>Priority</th>
+                  <th style={{ padding: '1.25rem 1.5rem', fontWeight: '500' }}>Due Date</th>
+                  <th style={{ padding: '1.25rem 1.5rem', fontWeight: '500', textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tasks.map(task => (
+                  <tr key={task.id} style={{ borderBottom: '1px solid var(--surface-border)' }} className="animate-fade-in">
+                    <td style={{ padding: '1.25rem 1.5rem' }}>
+                      <div style={{ fontWeight: '500', marginBottom: '0.25rem' }}>{task.title}</div>
+                      <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{task.description}</div>
+                    </td>
+                    <td style={{ padding: '1.25rem 1.5rem' }}>
+                      <span className={`badge badge-${task.priority.toLowerCase()}`}>
+                        {task.priority}
+                      </span>
+                    </td>
+                    <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                      {task.dueDate ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <Clock size={14} /> {task.dueDate}
+                        </div>
+                      ) : '-'}
+                    </td>
+                    <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
+                      {task.status !== 'DONE' && (
+                        <button 
+                          onClick={() => handleCloseTask(task.id)}
+                          className="btn btn-sm" 
+                          style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--status-done)', border: '1px solid rgba(16, 185, 129, 0.2)' }}
+                        >
+                          Complete
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
+      {/* Create Task Modal */}
+      {showModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem' }}>
+          <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '500px', padding: '2rem' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>Create New Task</h3>
+            <form onSubmit={handleCreateTask}>
+              <div className="input-group">
+                <label className="input-label">Title</label>
+                <input required type="text" className="input-field" value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} placeholder="E.g., Review PR #102" />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Description</label>
+                <textarea className="input-field" value={newTaskDesc} onChange={e => setNewTaskDesc(e.target.value)} placeholder="Provide more details..." rows={3}></textarea>
+              </div>
+              <div className="input-group">
+                <label className="input-label">Priority</label>
+                <select className="input-field select-field" value={newTaskPriority} onChange={e => setNewTaskPriority(e.target.value)}>
+                  <option value="LOW">Low</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="HIGH">High</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
+                <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary">Cancel</button>
+                <button type="submit" className="btn btn-primary">Create Task</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
