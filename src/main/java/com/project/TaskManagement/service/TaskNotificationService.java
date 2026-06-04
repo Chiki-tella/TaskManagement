@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -24,8 +24,8 @@ public class TaskNotificationService {
     public void sendNotification() {
         System.out.println("Running daily task notification job at 9 AM...");
         
-        LocalDate today = LocalDate.now();
-        List<Task> dueTasks = taskRepository.findDueOrOverdueTasksWithAssignees(today);
+        LocalDateTime todayEnd = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59);
+        List<Task> dueTasks = taskRepository.findDueOrOverdueTasksWithAssignees(todayEnd);
         
         if (dueTasks.isEmpty()) {
             System.out.println("No due tasks found. Skipping emails.");

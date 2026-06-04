@@ -7,7 +7,7 @@ import org.springframework.data.domain.*;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -66,6 +66,10 @@ public interface TaskRepository extends JpaRepository<Task, Long>, TaskRepositor
     @Query("SELECT t FROM Task t WHERE t.status = :status")
     Page<Task> findByStatusPaged(@Param("status") Status status, Pageable pageable);
 
+    @Query("SELECT t FROM Task t WHERE t.status = :status AND t.assignee.email = :email")
+    Page<Task> findByStatusAndAssigneeEmailPaged(@Param("status") Status status, @Param("email") String email, Pageable pageable);
+
+
     // Native pagination needs an explicit countQuery
     @Query(
         value = "SELECT * FROM tasks WHERE status = :status",
@@ -102,8 +106,12 @@ public interface TaskRepository extends JpaRepository<Task, Long>, TaskRepositor
     int updateTaskStatus(@Param("id") Long id, @Param("newStatus") Status newStatus);
 
     @Modifying
+    @Query("UPDATE Task t SET t.status = :newStatus WHERE t.id = :id AND t.assignee.email = :email")
+    int updateTaskStatusOwned(@Param("id") Long id, @Param("newStatus") Status newStatus, @Param("email") String email);
+
+    @Modifying
     @Query("DELETE FROM Task t WHERE t.status = :status AND t.dueDate < :date")
-    int deleteCompletedTasksBefore(@Param("status") Status status, @Param("date") LocalDate date);
+    int deleteCompletedTasksBefore(@Param("status") Status status, @Param("date") LocalDateTime date);
 
     // ─────────────────────────────────────────
     // OVERDUE — Native
@@ -111,15 +119,15 @@ public interface TaskRepository extends JpaRepository<Task, Long>, TaskRepositor
 
     @Query(value = "SELECT * FROM tasks WHERE due_date < :date AND status != :status",
            nativeQuery = true)
-    List<Task> findOverdueTasks(@Param("date") LocalDate date, @Param("status") String status);
+    List<Task> findOverdueTasks(@Param("date") LocalDateTime date, @Param("status") String status);
 
     // ─────────────────────────────────────────
     // SCHEDULING & DASHBOARD
     // ─────────────────────────────────────────
 
     @Query("SELECT t FROM Task t JOIN FETCH t.assignee WHERE t.dueDate <= :date AND t.status != 'DONE' AND t.assignee IS NOT NULL")
-    List<Task> findDueOrOverdueTasksWithAssignees(@Param("date") LocalDate date);
+    List<Task> findDueOrOverdueTasksWithAssignees(@Param("date") LocalDateTime date);
 
     @Query("SELECT t FROM Task t WHERE t.dueDate <= :date AND t.status != 'DONE' AND t.assignee.email = :email")
-    List<Task> findDueOrOverdueTasksByUserEmail(@Param("date") LocalDate date, @Param("email") String email);
+    List<Task> findDueOrOverdueTasksByUserEmail(@Param("date") LocalDateTime date, @Param("email") String email);
 }

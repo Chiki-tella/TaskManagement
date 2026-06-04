@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -22,8 +22,9 @@ public class TaskController {
 
     // POST /api/tasks
     @PostMapping
-    public Task createTask(@RequestBody TaskRequest req) {
-        return taskService.createTask(req);
+    public Task createTask(@RequestBody TaskRequest req, java.security.Principal principal) {
+        if (principal == null) throw new RuntimeException("Unauthorized");
+        return taskService.createTask(req, principal.getName());
     }
 
     // GET /api/tasks/by-status?status=TODO
@@ -51,9 +52,11 @@ public class TaskController {
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size,
         @RequestParam(defaultValue = "dueDate") String sortBy,
-        @RequestParam(defaultValue = "ASC") String sortDir
+        @RequestParam(defaultValue = "ASC") String sortDir,
+        java.security.Principal principal
     ) {
-        return taskService.getByStatusPaged(status, page, size, sortBy, sortDir);
+        if (principal == null) throw new RuntimeException("Unauthorized");
+        return taskService.getByStatusPaged(status, page, size, sortBy, sortDir, principal.getName());
     }
 
     // GET /api/tasks/by-statuses?statuses=TODO&statuses=IN_PROGRESS
@@ -88,16 +91,17 @@ public class TaskController {
 
     // PATCH /api/tasks/1/close
     @PatchMapping("/{id}/close")
-    public ResponseEntity<String> close(@PathVariable Long id) {
-        int updated = taskService.closeTask(id);
+    public ResponseEntity<String> close(@PathVariable Long id, java.security.Principal principal) {
+        if (principal == null) return ResponseEntity.status(401).build();
+        int updated = taskService.closeTask(id, principal.getName());
         return updated > 0
             ? ResponseEntity.ok("Task " + id + " closed")
             : ResponseEntity.notFound().build();
     }
 
-    // DELETE /api/tasks/cleanup?before=2024-01-01
+    // DELETE /api/tasks/cleanup?before=2024-01-01T00:00
     @DeleteMapping("/cleanup")
-    public ResponseEntity<String> cleanup(@RequestParam LocalDate before) {
+    public ResponseEntity<String> cleanup(@RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime before) {
         int deleted = taskService.cleanup(before);
         return ResponseEntity.ok("Deleted " + deleted + " tasks");
     }

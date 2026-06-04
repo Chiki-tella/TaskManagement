@@ -50,22 +50,17 @@ public class WebController {
     @GetMapping("/")
     public String index(
             @RequestParam(required = false) Status status,
-            Model model) {
+            Model model,
+            java.security.Principal principal) {
         
         List<Task> tasks;
+        String userEmail = principal != null ? principal.getName() : "";
         
-        // If a status filter is provided, fetch by status. Otherwise fetch all (for simplicity, we'll fetch a page or use an existing method).
-        // Since we don't have a "findAll" without pagination exposed in TaskService yet, 
-        // we can either add one or use the paged endpoint. Let's use the paged endpoint for simplicity.
         if (status != null) {
             tasks = taskService.getByStatus(status);
             model.addAttribute("currentStatus", status.name());
         } else {
-            // Fetching a default page of tasks, since we have getByStatusPaged but not findAll.
-            // Wait, actually I will just use taskService.getByStatus(Status.TODO) by default if null, 
-            // or I can create a small new method inside TaskService to find all, or use repository directly. 
-            // Let's just use the paged API but return the content.
-            tasks = taskService.getByStatusPaged(Status.TODO, 0, 50, "dueDate", "ASC").getContent();
+            tasks = taskService.getByStatusPaged(Status.TODO, 0, 50, "dueDate", "ASC", userEmail).getContent();
             model.addAttribute("currentStatus", "TODO (Default)");
         }
 

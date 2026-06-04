@@ -14,6 +14,7 @@ export default function Dashboard() {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDesc, setNewTaskDesc] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState('MEDIUM');
+  const [newTaskDueDate, setNewTaskDueDate] = useState('');
 
   useEffect(() => {
     fetchTasks();
@@ -58,7 +59,8 @@ export default function Dashboard() {
           title: newTaskTitle,
           description: newTaskDesc,
           priority: newTaskPriority,
-          status: 'TODO'
+          status: 'TODO',
+          dueDate: newTaskDueDate || null
         })
       });
       if (res.ok) {
@@ -66,6 +68,7 @@ export default function Dashboard() {
         setNewTaskTitle('');
         setNewTaskDesc('');
         setNewTaskPriority('MEDIUM');
+        setNewTaskDueDate('');
         if (statusFilter === 'TODO') {
           fetchTasks();
         } else {
@@ -142,7 +145,7 @@ export default function Dashboard() {
         )}
 
         {/* Header Section */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Your Tasks</h2>
             <p style={{ color: 'var(--text-secondary)' }}>Manage your daily goals and workflows.</p>
@@ -209,8 +212,9 @@ export default function Dashboard() {
                     </td>
                     <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
                       {task.dueDate ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <Clock size={14} /> {task.dueDate}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <Calendar size={14} />
+                          <span style={{ fontSize: '0.875rem' }}>{new Date(task.dueDate).toLocaleString()}</span>
                         </div>
                       ) : '-'}
                     </td>
@@ -254,6 +258,10 @@ export default function Dashboard() {
                   <option value="MEDIUM">Medium</option>
                   <option value="HIGH">High</option>
                 </select>
+              </div>
+              <div className="input-group">
+                <label className="input-label">Due Date & Time</label>
+                <input type="datetime-local" className="input-field" value={newTaskDueDate} onChange={e => setNewTaskDueDate(e.target.value)} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
                 <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary">Cancel</button>

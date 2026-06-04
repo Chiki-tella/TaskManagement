@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalDateTime;
 
 @Entity
@@ -31,7 +31,7 @@ public class Task {
     @Enumerated(EnumType.STRING)
     private Priority priority;
 
-    private LocalDate dueDate;
+    private LocalDateTime dueDate;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
