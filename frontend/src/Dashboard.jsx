@@ -1,13 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
-import { LogOut, Plus, CheckCircle2, Circle, Clock, Trash2 } from 'lucide-react';
+import { LogOut, Plus, CheckCircle2, Circle, Clock, Trash2, Calendar, Flame, Star, Trophy } from 'lucide-react';
+import Confetti from 'react-confetti';
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { userProfile, logout, checkSession } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [dueTasks, setDueTasks] = useState([]);
   const [statusFilter, setStatusFilter] = useState('TODO');
   const [loading, setLoading] = useState(false);
+  
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+
+  const xp = userProfile?.xp || 0;
+  const level = userProfile?.level || 1;
+  const streak = userProfile?.streak || 0;
+  const nextLevelXp = level * 100;
+  const xpProgress = Math.min((xp / nextLevelXp) * 100, 100);
+
+  const motivationalQuotes = [
+    "You're all caught up! Time to conquer the world... or take a nap.",
+    "A clean slate. What will you achieve next?",
+    "Empty lists are a sign of an empty mind... wait, no, a productive mind!",
+    "Zero tasks left! You are basically a superhero now.",
+    "Nothing to do here. Go outside and touch some grass."
+  ];
+  const [emptyQuote] = useState(motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)]);
 
   // New task modal state
   const [showModal, setShowModal] = useState(false);
@@ -20,6 +39,12 @@ export default function Dashboard() {
     fetchTasks();
     fetchDueTasks();
   }, [statusFilter]);
+
+  useEffect(() => {
+    const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const fetchDueTasks = async () => {
     try {
@@ -84,7 +109,10 @@ export default function Dashboard() {
     try {
       const res = await fetch(`/api/tasks/${id}/close`, { method: 'PATCH' });
       if (res.ok) {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 4000);
         fetchTasks();
+        if (checkSession) checkSession();
       }
     } catch (e) {
       console.error("Failed to close task", e);
@@ -93,13 +121,33 @@ export default function Dashboard() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {showConfetti && <Confetti width={windowSize.width} height={windowSize.height} recycle={false} numberOfPieces={600} gravity={0.2} />}
+      
       {/* Navigation */}
-      <nav style={{ background: 'var(--surface-color)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--surface-border)', padding: '1rem 0' }}>
-        <div className="container" style={{ padding: '0 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 auto' }}>
+      <nav style={{ background: 'var(--surface-color)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--surface-border)', padding: '1rem 0', zIndex: 40, position: 'relative' }}>
+        <div className="container" style={{ padding: '0 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 auto', flexWrap: 'wrap', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>T</div>
             <h1 style={{ fontSize: '1.25rem', fontWeight: '600', margin: 0 }}>TaskFlow</h1>
           </div>
+          
+          {/* Gamification Stats */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', background: 'rgba(0,0,0,0.2)', padding: '0.5rem 1.25rem', borderRadius: '99px' }}>
+            <div title="Daily Streak" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#f97316', fontWeight: 'bold' }}>
+              <Flame size={18} /> {streak}
+            </div>
+            <div style={{ width: '1px', height: '20px', background: 'var(--surface-border)' }}></div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div title={`Level ${level}`} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#fbbf24', fontWeight: 'bold' }}>
+                <Trophy size={18} /> Lvl {level}
+              </div>
+              <div style={{ width: '100px', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '99px', overflow: 'hidden' }}>
+                <div style={{ width: `${xpProgress}%`, height: '100%', background: '#3b82f6', transition: 'width 0.5s ease-out' }}></div>
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{xp}/{nextLevelXp}</div>
+            </div>
+          </div>
+
           <button onClick={logout} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <LogOut size={16} /> Logout
           </button>
@@ -184,9 +232,10 @@ export default function Dashboard() {
               <div className="spinner"></div>
             </div>
           ) : tasks.length === 0 ? (
-            <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-              <CheckCircle2 size={48} style={{ opacity: 0.2, margin: '0 auto 1rem' }} />
-              <p>No tasks found for this status.</p>
+            <div style={{ padding: '6rem 2rem', textAlign: 'center', color: 'var(--text-secondary)' }} className="animate-fade-in">
+              <Star size={64} style={{ opacity: 0.2, margin: '0 auto 1.5rem', color: '#fbbf24' }} />
+              <h3 style={{ fontSize: '1.25rem', color: 'white', marginBottom: '0.5rem' }}>{emptyQuote}</h3>
+              <p>Why not create a new task and level up?</p>
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -200,7 +249,7 @@ export default function Dashboard() {
               </thead>
               <tbody>
                 {tasks.map(task => (
-                  <tr key={task.id} style={{ borderBottom: '1px solid var(--surface-border)' }} className="animate-fade-in">
+                  <tr key={task.id} className="task-row animate-fade-in" style={{ borderBottom: '1px solid var(--surface-border)' }}>
                     <td style={{ padding: '1.25rem 1.5rem' }}>
                       <div style={{ fontWeight: '500', marginBottom: '0.25rem' }}>{task.title}</div>
                       <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{task.description}</div>

@@ -31,4 +31,12 @@ public class UserController {
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
+
+    // GET /api/users/me
+    @GetMapping("/me")
+    public User getCurrentUser(java.security.Principal principal) {
+        if (principal == null) throw new RuntimeException("Unauthorized");
+        return userRepository.findByEmail(principal.getName())
+            .orElseThrow(() -> new RuntimeException("User not found"));
+    }
 }

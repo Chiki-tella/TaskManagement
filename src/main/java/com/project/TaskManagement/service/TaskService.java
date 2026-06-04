@@ -75,7 +75,29 @@ public class TaskService {
 
     @Transactional
     public int closeTask(Long id, String userEmail) {
-        return taskRepository.updateTaskStatusOwned(id, Status.DONE, userEmail);
+        int updated = taskRepository.updateTaskStatusOwned(id, Status.DONE, userEmail);
+        if (updated > 0) {
+            userRepository.findByEmail(userEmail).ifPresent(user -> {
+                user.setXp(user.getXp() + 10);
+                if (user.getXp() >= user.getLevel() * 100) {
+                    user.setXp(user.getXp() - (user.getLevel() * 100));
+                    user.setLevel(user.getLevel() + 1);
+                }
+
+                java.time.LocalDate today = java.time.LocalDate.now();
+                if (user.getLastTaskCompletedDate() == null) {
+                    user.setStreak(1);
+                } else if (user.getLastTaskCompletedDate().equals(today.minusDays(1))) {
+                    user.setStreak(user.getStreak() + 1);
+                } else if (!user.getLastTaskCompletedDate().equals(today)) {
+                    user.setStreak(1);
+                }
+                user.setLastTaskCompletedDate(today);
+
+                userRepository.save(user);
+            });
+        }
+        return updated;
     }
 
     @Transactional

@@ -3,6 +3,8 @@ package com.project.TaskManagement.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.time.LocalDate;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,6 +33,21 @@ public class User {
     
     @Builder.Default
     private String roles = "ROLE_USER";
+
+    @Builder.Default
+    private Integer xp = 0;
+
+    @Builder.Default
+    private Integer level = 1;
+
+    @Builder.Default
+    private Integer streak = 0;
+
+    private LocalDate lastTaskCompletedDate;
+
+    public Integer getXp() { return xp == null ? 0 : xp; }
+    public Integer getLevel() { return level == null ? 1 : level; }
+    public Integer getStreak() { return streak == null ? 0 : streak; }
 
     @OneToMany(mappedBy = "assignee")
     @Builder.Default 

@@ -218,3 +218,15 @@ button, input, select, textarea {
 .animate-fade-in {
   animation: fadeIn 0.4s ease forwards;
 }
+
+.task-row {
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.task-row:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.02);
+  box-shadow: var(--shadow-md);
+  z-index: 10;
+  position: relative;
+}

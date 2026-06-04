@@ -3,8 +3,9 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
     // Try to fetch current user or tasks to see if we're authenticated
@@ -13,17 +14,17 @@ export function AuthProvider({ children }) {
 
   const checkSession = async () => {
     try {
-      // Just hitting an authenticated endpoint to see if our session cookie is valid
-      const res = await fetch('/api/tasks/paged?status=TODO');
+      // Fetch the authenticated user's profile
+      const res = await fetch('/api/users/me');
       if (res.ok) {
-        // We're authenticated! For this simple app, we just set a dummy user object
-        // if the API doesn't return the current user details. 
-        setUser({ isAuthenticated: true });
+        const data = await res.json();
+        setIsAuthenticated(true);
+        setUserProfile(data);
       } else {
-        setUser(null);
+        setIsAuthenticated(false);
       }
     } catch (e) {
-      setUser(null);
+      setIsAuthenticated(false);
     } finally {
       setLoading(false);
     }
@@ -46,9 +47,11 @@ export function AuthProvider({ children }) {
     // Spring Security formLogin usually returns 302 to '/' on success
     if (res.type === 'opaqueredirect' || res.status === 302 || res.ok) {
       // Let's verify by checking session
-      const verify = await fetch('/api/tasks/paged?status=TODO');
+      const verify = await fetch('/api/users/me');
       if (verify.ok) {
-        setUser({ email, isAuthenticated: true });
+        const data = await verify.json();
+        setIsAuthenticated(true);
+        setUserProfile(data);
         return true;
       }
     }
@@ -65,12 +68,13 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    await fetch('/logout', { method: 'POST' }); // Spring Security default logout
-    setUser(null);
+    await fetch('/api/logout', { method: 'POST' }); // Spring Security default logout
+    setIsAuthenticated(false);
+    setUserProfile(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ isAuthenticated, loading, login, register, logout, userProfile, checkSession }}>
       {children}
     </AuthContext.Provider>
   );

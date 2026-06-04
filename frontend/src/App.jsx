@@ -7,7 +7,7 @@ import Dashboard from './Dashboard';
 import './index.css';
 
 function PrivateRoute({ children }) {
-  const { user, loading } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   
   if (loading) {
     return (
@@ -17,7 +17,7 @@ function PrivateRoute({ children }) {
     );
   }
   
-  return user ? children : <Navigate to="/login" />;
+  return isAuthenticated ? children : <Navigate to="/login" />;
 }
 
 function App() {
