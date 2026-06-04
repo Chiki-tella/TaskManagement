@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './AuthContext';
 import Login from './Login';
 import Register from './Register';
 import Dashboard from './Dashboard';
+import Home from './Home';
 import './index.css';
 
 function PrivateRoute({ children }) {
@@ -25,9 +26,10 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
+          <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/" element={
+          <Route path="/dashboard" element={
             <PrivateRoute>
               <Dashboard />
             </PrivateRoute>

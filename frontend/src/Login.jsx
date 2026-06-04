@@ -15,7 +15,7 @@ export default function Login() {
     setError('');
     const success = await login(email, password);
     if (success) {
-      navigate('/');
+      navigate('/dashboard');
     } else {
       setError('Invalid email or password.');
     }
