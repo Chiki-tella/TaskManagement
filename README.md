@@ -27,7 +27,7 @@ The backend provides secure RESTful APIs to manage users and tasks.
 - **Null-Safe Gamification Engine**: Handles XP accumulation, level thresholds, and daily streak tracking safely on the server side.
 
 ### How to Run the Backend
-1. Ensure PostgreSQL is running locally on port `5432` with a database named `taskdb` (credentials: `postgres` / `Munezero`).
+1. Ensure PostgreSQL is running locally on port `5432` with a database named `taskdb` (credentials: `choose whatever` / `choose whatever`).
 2. Navigate to the root directory.
 3. Start the Spring Boot application using Maven:
    ```bash
