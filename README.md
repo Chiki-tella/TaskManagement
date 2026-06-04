@@ -35,6 +35,11 @@ The backend provides secure RESTful APIs to manage users and tasks.
    ```
 4. The API will be available at `http://localhost:8080/api/`.
 
+### 📚 API Documentation
+This project automatically generates OpenAPI (Swagger) documentation! Once the backend is running, you can explore and interact with the API endpoints here:
+- **Interactive Swagger UI**: [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
+- **Raw OpenAPI JSON**: [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+
 ---
 
 ## ⚛️ Frontend (React)
