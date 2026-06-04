@@ -1,16 +1,49 @@
-# React + Vite
+# TaskFlow Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the React frontend for the TaskFlow application, an interactive and gamified task management system.
 
-Currently, two official plugins are available:
+## 🚀 Technologies Used
+- **React**: Component-based UI rendering.
+- **Vite**: Ultra-fast frontend build tool and development server.
+- **React Router DOM**: Client-side routing for seamless page transitions (SPA).
+- **Lucide React**: Beautiful, modern SVG icons.
+- **React Confetti**: Celebration animations for completing tasks.
+- **CSS3 / Glassmorphism**: Premium styling with frosted-glass effects and smooth micro-animations.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 📂 Project Structure
+- `src/App.jsx` - The main routing file (controls public/private routes).
+- `src/AuthContext.jsx` - Global state management for user authentication, XP, and Streaks.
+- `src/Home.jsx` - The beautifully designed public landing page.
+- `src/Dashboard.jsx` - The main authenticated view for managing tasks and viewing gamification stats.
+- `src/Login.jsx` & `src/Register.jsx` - Authentication screens.
+- `src/index.css` - Global CSS containing our custom design system and layout utility classes.
 
-## React Compiler
+## 🛠️ Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Prerequisites
+Make sure you have [Node.js](https://nodejs.org/) installed on your machine.
 
-## Expanding the ESLint configuration
+### Installation
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Install the dependencies:
+   ```bash
+   npm install
+   ```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Running the Development Server
+To start the Vite development server:
+```bash
+npm run dev
+```
+The application will be available at `http://localhost:5173/`. 
+
+*Note: Ensure the Spring Boot backend is running simultaneously on `http://localhost:8080/` to handle API requests and authentication.*
+
+## 🎮 Gamification Features
+The frontend heavily focuses on user motivation:
+- Completing a task instantly fires a massive confetti burst!
+- The dashboard header dynamically tracks your `XP`, `Level`, and `Daily Streak`.
+- Motivational empty states (with random dynamic quotes) appear when all tasks are complete.
