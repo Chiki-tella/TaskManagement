@@ -5,6 +5,7 @@ import { LogOut, Plus, CheckCircle2, Circle, Clock, Trash2 } from 'lucide-react'
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const [tasks, setTasks] = useState([]);
+  const [dueTasks, setDueTasks] = useState([]);
   const [statusFilter, setStatusFilter] = useState('TODO');
   const [loading, setLoading] = useState(false);
 
@@ -16,7 +17,20 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchTasks();
+    fetchDueTasks();
   }, [statusFilter]);
+
+  const fetchDueTasks = async () => {
+    try {
+      const res = await fetch('/api/tasks/due-soon');
+      if (res.ok) {
+        const data = await res.json();
+        setDueTasks(data || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch due tasks", e);
+    }
+  };
 
   const fetchTasks = async () => {
     setLoading(true);
@@ -92,6 +106,41 @@ export default function Dashboard() {
       {/* Main Content */}
       <div className="container" style={{ flex: 1, padding: '2rem' }}>
         
+        {/* Due Tasks Banner */}
+        {dueTasks.length > 0 && (
+          <div className="animate-fade-in" style={{ 
+            background: 'rgba(248, 113, 113, 0.1)', 
+            border: '1px solid rgba(248, 113, 113, 0.3)',
+            borderRadius: '12px', 
+            padding: '1.25rem', 
+            marginBottom: '2rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem'
+          }}>
+            <div style={{ color: 'var(--priority-high)' }}>
+              <Clock size={24} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ margin: 0, fontWeight: 'bold', color: 'var(--priority-high)', fontSize: '1.1rem' }}>
+                You have {dueTasks.length} task{dueTasks.length > 1 ? 's' : ''} due today or overdue!
+              </h3>
+              <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                Please review and complete them as soon as possible.
+              </p>
+            </div>
+            <button 
+              className="btn btn-sm"
+              onClick={() => {
+                setStatusFilter('TODO'); // or create a filter to show them exactly, but TODO is fine
+              }}
+              style={{ background: 'var(--priority-high)', color: 'white', border: 'none' }}
+            >
+              View Tasks
+            </button>
+          </div>
+        )}
+
         {/* Header Section */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem' }}>
           <div>

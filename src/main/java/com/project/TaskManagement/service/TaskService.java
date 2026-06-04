@@ -85,4 +85,8 @@ public class TaskService {
     public int cleanup(LocalDate before) {
         return taskRepository.deleteCompletedTasksBefore(Status.DONE, before);
     }
+
+    public List<Task> getDueOrOverdueTasksForUser(String email) {
+        return taskRepository.findDueOrOverdueTasksByUserEmail(LocalDate.now(), email);
+    }
 }

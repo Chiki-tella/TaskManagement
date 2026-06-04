@@ -14,7 +14,7 @@ export function AuthProvider({ children }) {
   const checkSession = async () => {
     try {
       // Just hitting an authenticated endpoint to see if our session cookie is valid
-      const res = await fetch('/api/tasks');
+      const res = await fetch('/api/tasks/paged?status=TODO');
       if (res.ok) {
         // We're authenticated! For this simple app, we just set a dummy user object
         // if the API doesn't return the current user details. 
@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
     // Spring Security formLogin usually returns 302 to '/' on success
     if (res.type === 'opaqueredirect' || res.status === 302 || res.ok) {
       // Let's verify by checking session
-      const verify = await fetch('/api/tasks');
+      const verify = await fetch('/api/tasks/paged?status=TODO');
       if (verify.ok) {
         setUser({ email, isAuthenticated: true });
         return true;

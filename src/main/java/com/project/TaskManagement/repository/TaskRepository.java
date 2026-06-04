@@ -112,4 +112,14 @@ public interface TaskRepository extends JpaRepository<Task, Long>, TaskRepositor
     @Query(value = "SELECT * FROM tasks WHERE due_date < :date AND status != :status",
            nativeQuery = true)
     List<Task> findOverdueTasks(@Param("date") LocalDate date, @Param("status") String status);
+
+    // ─────────────────────────────────────────
+    // SCHEDULING & DASHBOARD
+    // ─────────────────────────────────────────
+
+    @Query("SELECT t FROM Task t JOIN FETCH t.assignee WHERE t.dueDate <= :date AND t.status != 'DONE' AND t.assignee IS NOT NULL")
+    List<Task> findDueOrOverdueTasksWithAssignees(@Param("date") LocalDate date);
+
+    @Query("SELECT t FROM Task t WHERE t.dueDate <= :date AND t.status != 'DONE' AND t.assignee.email = :email")
+    List<Task> findDueOrOverdueTasksByUserEmail(@Param("date") LocalDate date, @Param("email") String email);
 }

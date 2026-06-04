@@ -101,4 +101,13 @@ public class TaskController {
         int deleted = taskService.cleanup(before);
         return ResponseEntity.ok("Deleted " + deleted + " tasks");
     }
+
+    // GET /api/tasks/due-soon
+    @GetMapping("/due-soon")
+    public List<Task> getDueSoon(java.security.Principal principal) {
+        if (principal == null) return List.of();
+        // Here we ideally call a service method, but for simplicity we can just use the repository or service.
+        // I will add a method to taskService or just inject the repository if I can. Wait, I should add a method in TaskService.
+        return taskService.getDueOrOverdueTasksForUser(principal.getName());
+    }
 }
