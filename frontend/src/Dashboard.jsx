@@ -38,6 +38,13 @@ export default function Dashboard() {
   useEffect(() => {
     fetchTasks();
     fetchDueTasks();
+    
+    // Check for due tasks every minute so the banner pops up automatically
+    const interval = setInterval(() => {
+      fetchDueTasks();
+    }, 60000);
+
+    return () => clearInterval(interval);
   }, [statusFilter]);
 
   useEffect(() => {
@@ -99,6 +106,7 @@ export default function Dashboard() {
         } else {
           setStatusFilter('TODO');
         }
+        fetchDueTasks();
       }
     } catch (e) {
       console.error("Failed to create task", e);
@@ -112,6 +120,7 @@ export default function Dashboard() {
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 4000);
         fetchTasks();
+        fetchDueTasks();
         if (checkSession) checkSession();
       }
     } catch (e) {
