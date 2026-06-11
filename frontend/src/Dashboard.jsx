@@ -10,6 +10,30 @@ export default function Dashboard() {
   const [statusFilter, setStatusFilter] = useState('TODO');
   const [loading, setLoading] = useState(false);
   
+  const [settings, setSettings] = useState({});
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [editCron, setEditCron] = useState('0 0 9 * * *');
+  const [editInterval, setEditInterval] = useState('60000');
+  const isAdmin = userProfile?.roles?.includes('ROLE_ADMIN');
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/settings');
+      if (res.ok) {
+        const data = await res.json();
+        const settingsMap = {};
+        data.forEach(item => settingsMap[item.settingKey] = item.settingValue);
+        setSettings(settingsMap);
+        setEditCron(settingsMap['NOTIFICATION_CRON'] || '0 0 9 * * *');
+        setEditInterval(settingsMap['FRONTEND_POLL_INTERVAL'] || '60000');
+      }
+    } catch (e) { console.error("Failed to fetch settings", e); }
+  };
+
   const [showConfetti, setShowConfetti] = useState(false);
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
 
@@ -39,14 +63,33 @@ export default function Dashboard() {
     fetchTasks();
     fetchDueTasks();
     
-    // Check for due tasks based on configured interval so the banner pops up automatically
-    const pollInterval = parseInt(import.meta.env.VITE_DASHBOARD_POLL_INTERVAL || '60000', 10);
+    const pollInterval = parseInt(settings.FRONTEND_POLL_INTERVAL || '60000', 10);
     const interval = setInterval(() => {
       fetchDueTasks();
     }, pollInterval);
 
     return () => clearInterval(interval);
-  }, [statusFilter]);
+  }, [statusFilter, settings.FRONTEND_POLL_INTERVAL]);
+
+  const handleSaveSettings = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          'NOTIFICATION_CRON': editCron,
+          'FRONTEND_POLL_INTERVAL': editInterval
+        })
+      });
+      if (res.ok) {
+        setShowSettingsModal(false);
+        fetchSettings();
+      }
+    } catch (e) {
+      console.error("Failed to save settings", e);
+    }
+  };
 
   useEffect(() => {
     const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
@@ -208,9 +251,16 @@ export default function Dashboard() {
             <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Your Tasks</h2>
             <p style={{ color: 'var(--text-secondary)' }}>Manage your daily goals and workflows.</p>
           </div>
-          <button onClick={() => setShowModal(true)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Plus size={18} /> New Task
-          </button>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            {isAdmin && (
+              <button onClick={() => setShowSettingsModal(true)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                ⚙️ Settings
+              </button>
+            )}
+            <button onClick={() => setShowModal(true)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Plus size={18} /> New Task
+            </button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -325,6 +375,29 @@ export default function Dashboard() {
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
                 <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary">Cancel</button>
                 <button type="submit" className="btn btn-primary">Create Task</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem' }}>
+          <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '500px', padding: '2rem' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>System Settings</h3>
+            <form onSubmit={handleSaveSettings}>
+              <div className="input-group">
+                <label className="input-label">Email Notification Cron</label>
+                <input required type="text" className="input-field" value={editCron} onChange={e => setEditCron(e.target.value)} placeholder="0 0 9 * * *" />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Frontend Poll Interval (ms)</label>
+                <input required type="number" className="input-field" value={editInterval} onChange={e => setEditInterval(e.target.value)} placeholder="60000" />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
+                <button type="button" onClick={() => setShowSettingsModal(false)} className="btn btn-secondary">Cancel</button>
+                <button type="submit" className="btn btn-primary">Save Settings</button>
               </div>
             </form>
           </div>
