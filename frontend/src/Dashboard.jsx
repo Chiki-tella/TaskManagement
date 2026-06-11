@@ -39,10 +39,11 @@ export default function Dashboard() {
     fetchTasks();
     fetchDueTasks();
     
-    // Check for due tasks every minute so the banner pops up automatically
+    // Check for due tasks based on configured interval so the banner pops up automatically
+    const pollInterval = parseInt(import.meta.env.VITE_DASHBOARD_POLL_INTERVAL || '60000', 10);
     const interval = setInterval(() => {
       fetchDueTasks();
-    }, 60000);
+    }, pollInterval);
 
     return () => clearInterval(interval);
   }, [statusFilter]);

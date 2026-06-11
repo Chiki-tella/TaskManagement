@@ -19,8 +19,8 @@ public class TaskNotificationService {
     private final TaskRepository taskRepository;
     private final EmailService emailService;
 
-    // Runs every day at 9:00 AM server time
-    @Scheduled(cron = "0 0 9 * * *")
+    // Runs based on application.properties configuration (default: 9 AM server time)
+    @Scheduled(cron = "${app.task.notification.cron:0 0 9 * * *}")
     public void sendNotification() {
         System.out.println("Running daily task notification job at 9 AM...");
         
