@@ -113,6 +113,10 @@ public interface TaskRepository extends JpaRepository<Task, Long>, TaskRepositor
     @Query("DELETE FROM Task t WHERE t.status = :status AND t.dueDate < :date")
     int deleteCompletedTasksBefore(@Param("status") Status status, @Param("date") LocalDateTime date);
 
+    @Modifying
+    @Query("DELETE FROM Task t WHERE t.assignee.id = :userId")
+    void deleteByAssigneeId(@Param("userId") Long userId);
+
     // ─────────────────────────────────────────
     // OVERDUE — Native
     // ─────────────────────────────────────────

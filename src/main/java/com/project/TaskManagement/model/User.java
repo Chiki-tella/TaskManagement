@@ -51,5 +51,6 @@ public class User {
 
     @OneToMany(mappedBy = "assignee")
     @Builder.Default 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Task> tasks = new ArrayList<>();
 }

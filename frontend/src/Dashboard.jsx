@@ -14,6 +14,11 @@ export default function Dashboard() {
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   
+  const [viewMode, setViewMode] = useState('TASKS');
+  const [allUsers, setAllUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [deletingUserId, setDeletingUserId] = useState(null);
+  
   const [settings, setSettings] = useState({});
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [editCron, setEditCron] = useState('0 0 9 * * *');
@@ -103,6 +108,39 @@ export default function Dashboard() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    if (viewMode === 'ADMIN') {
+      fetchAllUsers();
+    }
+  }, [viewMode]);
+
+  const fetchAllUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const res = await fetch('/api/users');
+      if (res.ok) {
+        const data = await res.json();
+        setAllUsers(data);
+      }
+    } catch (e) { console.error("Failed to fetch users", e); }
+    finally { setLoadingUsers(false); }
+  };
+
+  const handleDeleteUser = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
+    setDeletingUserId(id);
+    try {
+      const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchAllUsers();
+      } else {
+        const text = await res.text();
+        alert(text || "Failed to delete user");
+      }
+    } catch (e) { console.error("Failed to delete user", e); }
+    finally { setDeletingUserId(null); }
+  };
 
   const fetchDueTasks = async () => {
     try {
@@ -199,6 +237,12 @@ export default function Dashboard() {
           
           {/* Gamification Stats */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', background: 'rgba(0,0,0,0.2)', padding: '0.5rem 1.25rem', borderRadius: '99px' }}>
+            {isAdmin && (
+              <div style={{ display: 'flex', gap: '0.5rem', marginRight: '1rem', borderRight: '1px solid var(--surface-border)', paddingRight: '1.5rem' }}>
+                <button onClick={() => setViewMode('TASKS')} className="btn btn-sm" style={{ background: viewMode === 'TASKS' ? 'var(--primary-color)' : 'transparent', color: viewMode === 'TASKS' ? 'white' : 'var(--text-secondary)', padding: '0.25rem 0.75rem' }}>My Tasks</button>
+                <button onClick={() => setViewMode('ADMIN')} className="btn btn-sm" style={{ background: viewMode === 'ADMIN' ? 'var(--primary-color)' : 'transparent', color: viewMode === 'ADMIN' ? 'white' : 'var(--text-secondary)', padding: '0.25rem 0.75rem' }}>Admin Panel</button>
+              </div>
+            )}
             <div title="Daily Streak" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#f97316', fontWeight: 'bold' }}>
               <Flame size={18} /> {streak}
             </div>
@@ -232,7 +276,8 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className="container" style={{ flex: 1, padding: '2rem' }}>
-        
+        {viewMode === 'TASKS' ? (
+          <>
         {/* Due Tasks Banner */}
         {dueTasks.length > 0 && (
           <div className="animate-fade-in" style={{ 
@@ -369,6 +414,72 @@ export default function Dashboard() {
             </table>
           )}
         </div>
+        </>
+        ) : (
+          /* Admin Panel View */
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Admin Panel - All Users</h2>
+                <p style={{ color: 'var(--text-secondary)' }}>Manage all registered users in the system.</p>
+              </div>
+            </div>
+
+            <div className="glass-panel" style={{ overflow: 'hidden' }}>
+              {loadingUsers ? (
+                <div style={{ padding: '4rem', display: 'flex', justifyContent: 'center' }}>
+                  <div className="spinner"></div>
+                </div>
+              ) : (
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--surface-border)', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                      <th style={{ padding: '1.25rem 1.5rem', fontWeight: '500' }}>User</th>
+                      <th style={{ padding: '1.25rem 1.5rem', fontWeight: '500' }}>Role</th>
+                      <th style={{ padding: '1.25rem 1.5rem', fontWeight: '500' }}>Stats</th>
+                      <th style={{ padding: '1.25rem 1.5rem', fontWeight: '500', textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allUsers.map(user => (
+                      <tr key={user.id} className="task-row animate-fade-in" style={{ borderBottom: '1px solid var(--surface-border)' }}>
+                        <td style={{ padding: '1.25rem 1.5rem' }}>
+                          <div style={{ fontWeight: '500', marginBottom: '0.25rem' }}>{user.name || 'Anonymous'}</div>
+                          <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{user.email}</div>
+                        </td>
+                        <td style={{ padding: '1.25rem 1.5rem' }}>
+                          <span className={`badge badge-${user.roles?.includes('ROLE_ADMIN') ? 'high' : 'medium'}`}>
+                            {user.roles?.includes('ROLE_ADMIN') ? 'ADMIN' : 'USER'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem' }}>
+                          <div style={{ display: 'flex', gap: '1rem' }}>
+                            <span title="Level"><Trophy size={14} style={{ display: 'inline', verticalAlign: 'middle', color: '#fbbf24' }}/> Lvl {user.level}</span>
+                            <span title="XP"><Star size={14} style={{ display: 'inline', verticalAlign: 'middle', color: '#3b82f6' }}/> {user.xp} XP</span>
+                            <span title="Streak"><Flame size={14} style={{ display: 'inline', verticalAlign: 'middle', color: '#f97316' }}/> {user.streak}</span>
+                          </div>
+                        </td>
+                        <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
+                          {user.email !== userProfile?.email && !user.roles?.includes('ROLE_ADMIN') && (
+                            <button 
+                              onClick={() => handleDeleteUser(user.id)}
+                              className="btn btn-sm" 
+                              style={{ background: 'rgba(248, 113, 113, 0.1)', color: '#f87171', border: '1px solid rgba(248, 113, 113, 0.2)', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+                              disabled={deletingUserId === user.id}
+                            >
+                              {deletingUserId === user.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                              Delete
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Create Task Modal */}
