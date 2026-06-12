@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
-import { LogOut, Plus, CheckCircle2, Circle, Clock, Trash2, Calendar, Flame, Star, Trophy } from 'lucide-react';
+import { LogOut, Plus, CheckCircle2, Circle, Clock, Trash2, Calendar, Flame, Star, Trophy, Loader2 } from 'lucide-react';
 import Confetti from 'react-confetti';
 
 export default function Dashboard() {
@@ -9,6 +9,10 @@ export default function Dashboard() {
   const [dueTasks, setDueTasks] = useState([]);
   const [statusFilter, setStatusFilter] = useState('TODO');
   const [loading, setLoading] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [completingTaskId, setCompletingTaskId] = useState(null);
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
   
   const [settings, setSettings] = useState({});
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -73,6 +77,7 @@ export default function Dashboard() {
 
   const handleSaveSettings = async (e) => {
     e.preventDefault();
+    setIsSavingSettings(true);
     try {
       const res = await fetch('/api/settings', {
         method: 'POST',
@@ -88,6 +93,8 @@ export default function Dashboard() {
       }
     } catch (e) {
       console.error("Failed to save settings", e);
+    } finally {
+      setIsSavingSettings(false);
     }
   };
 
@@ -127,6 +134,7 @@ export default function Dashboard() {
 
   const handleCreateTask = async (e) => {
     e.preventDefault();
+    setIsCreatingTask(true);
     try {
       const res = await fetch('/api/tasks', {
         method: 'POST',
@@ -154,10 +162,13 @@ export default function Dashboard() {
       }
     } catch (e) {
       console.error("Failed to create task", e);
+    } finally {
+      setIsCreatingTask(false);
     }
   };
 
   const handleCloseTask = async (id) => {
+    setCompletingTaskId(id);
     try {
       const res = await fetch(`/api/tasks/${id}/close`, { method: 'PATCH' });
       if (res.ok) {
@@ -169,6 +180,8 @@ export default function Dashboard() {
       }
     } catch (e) {
       console.error("Failed to close task", e);
+    } finally {
+      setCompletingTaskId(null);
     }
   };
 
@@ -201,8 +214,18 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <button onClick={logout} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <LogOut size={16} /> Logout
+          <button 
+            onClick={async () => {
+              setIsLoggingOut(true);
+              await logout();
+              setIsLoggingOut(false);
+            }} 
+            className="btn btn-secondary btn-sm" 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? <Loader2 size={16} className="animate-spin" /> : <LogOut size={16} />}
+            {isLoggingOut ? 'Logging out...' : 'Logout'}
           </button>
         </div>
       </nav>
@@ -332,9 +355,11 @@ export default function Dashboard() {
                         <button 
                           onClick={() => handleCloseTask(task.id)}
                           className="btn btn-sm" 
-                          style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--status-done)', border: '1px solid rgba(16, 185, 129, 0.2)' }}
+                          style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--status-done)', border: '1px solid rgba(16, 185, 129, 0.2)', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+                          disabled={completingTaskId === task.id}
                         >
-                          Complete
+                          {completingTaskId === task.id && <Loader2 size={14} className="animate-spin" />}
+                          {completingTaskId === task.id ? 'Completing...' : 'Complete'}
                         </button>
                       )}
                     </td>
@@ -374,7 +399,10 @@ export default function Dashboard() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
                 <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary">Cancel</button>
-                <button type="submit" className="btn btn-primary">Create Task</button>
+                <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} disabled={isCreatingTask}>
+                  {isCreatingTask && <Loader2 size={18} className="animate-spin" />}
+                  {isCreatingTask ? 'Creating...' : 'Create Task'}
+                </button>
               </div>
             </form>
           </div>
@@ -397,7 +425,10 @@ export default function Dashboard() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
                 <button type="button" onClick={() => setShowSettingsModal(false)} className="btn btn-secondary">Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Settings</button>
+                <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} disabled={isSavingSettings}>
+                  {isSavingSettings && <Loader2 size={18} className="animate-spin" />}
+                  {isSavingSettings ? 'Saving...' : 'Save Settings'}
+                </button>
               </div>
             </form>
           </div>
